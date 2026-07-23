@@ -1,4 +1,4 @@
-# Harbour Space — Decentralized ledger on top of py-ipv8
+# Boniato Decentralized ledger on top of py-ipv8
 
 A P2P ledger (blockchain) built on [py-ipv8](https://github.com/Tribler/py-ipv8).
 Peers generate signed dummy transactions, broadcast them across the network,
