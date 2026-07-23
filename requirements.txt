@@ -1,0 +1,7 @@
+# Core runtime dependency: the P2P networking stack.
+pyipv8==3.2.1
+
+# Everything else (hashing, dataclasses, asyncio, unittest) is standard library.
+# Topology export is dependency-free (JSON + Graphviz DOT text). To render the
+# DOT into an image, install Graphviz at the OS level (`apt install graphviz`)
+# and run:  dot -Tpng topo.dot -o topo.png

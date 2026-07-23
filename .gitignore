@@ -1,0 +1,15 @@
+claude.md
+.codegraph/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Generated at runtime (scratch experiment outputs at repo root only;
+# curated topology artifacts under docs/topology/ ARE committed)
+node.pem
+/docs/topology

@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "harbourspace-ledger"
+version = "0.1.0"
+description = "A decentralized ledger (blockchain) built on py-ipv8 — Harbour Space module 14"
+requires-python = ">=3.10"
+dependencies = ["pyipv8==3.2.1"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# Install for development (makes `import blockchain` work without PYTHONPATH):
+#   pip install -e .
