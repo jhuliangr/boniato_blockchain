@@ -11,5 +11,5 @@ dist/
 
 # Generated at runtime (scratch experiment outputs at repo root only;
 # curated topology artifacts under docs/topology/ ARE committed)
-node.pem
+*.pem
 /docs/topology
