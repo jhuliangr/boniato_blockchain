@@ -1,0 +1,244 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+  background-color: var(--soil-950);
+  /* A faint tilled-field texture behind everything. */
+  background-image:
+    radial-gradient(1200px 500px at 12% -10%, rgb(120 84 40 / 22%), transparent 70%),
+    radial-gradient(900px 420px at 90% 0%, rgb(86 132 60 / 14%), transparent 70%),
+    repeating-linear-gradient(97deg, rgb(255 255 255 / 1.4%) 0 1px, transparent 1px 26px);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------- utilities */
+
+.mono {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  color: var(--text-dim);
+}
+
+.faint {
+  color: var(--text-faint);
+}
+
+.tiny {
+  font-size: 11px;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.row--wrap {
+  flex-wrap: wrap;
+}
+
+.spread {
+  justify-content: space-between;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.grow {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Section label: small, spaced, unobtrusive. */
+.eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* A small rounded tag. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
+  background: rgb(255 255 255 / 5%);
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+}
+
+.chip--ok {
+  color: var(--ok);
+  background: rgb(131 201 108 / 12%);
+  border-color: rgb(131 201 108 / 35%);
+}
+
+.chip--bad {
+  color: var(--danger);
+  background: rgb(226 96 79 / 12%);
+  border-color: rgb(226 96 79 / 35%);
+}
+
+.chip--warn {
+  color: var(--warn);
+  background: rgb(232 163 61 / 12%);
+  border-color: rgb(232 163 61 / 35%);
+}
+
+.chip--gold {
+  color: var(--gold);
+  background: rgb(240 194 75 / 12%);
+  border-color: rgb(240 194 75 / 38%);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: 0 0 auto;
+}
+
+/* Thin horizontal meter, filled via inline width. */
+.meter {
+  position: relative;
+  height: 5px;
+  overflow: hidden;
+  background: rgb(0 0 0 / 45%);
+  border-radius: 999px;
+}
+
+.meter > i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  background: linear-gradient(90deg, var(--leaf-deep), var(--leaf));
+  border-radius: 999px;
+  transition: width 0.35s ease;
+}
+
+.scroll-y {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.scroll-y::-webkit-scrollbar {
+  width: 9px;
+}
+
+.scroll-y::-webkit-scrollbar-track {
+  background: rgb(0 0 0 / 25%);
+}
+
+.scroll-y::-webkit-scrollbar-thumb {
+  background: var(--soil-600);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+.empty-note {
+  padding: 14px 4px;
+  font-size: 12px;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
