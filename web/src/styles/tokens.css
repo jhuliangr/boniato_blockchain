@@ -1,0 +1,48 @@
+/* Design tokens: one warm, earthy scale used by every other stylesheet.
+   Soil browns for surfaces, leaf green for growth, sweet-potato purple and
+   flesh orange for the crop itself, gold for "ready / act now". */
+
+:root {
+  /* surfaces, darkest to lightest */
+  --soil-950: #120d09;
+  --soil-900: #191209;
+  --soil-850: #1f1710;
+  --soil-800: #271d14;
+  --soil-750: #30251a;
+  --soil-700: #3b2d20;
+  --soil-600: #4a3826;
+  --line: #533f2c;
+  --line-soft: #3a2c1f;
+
+  /* ink */
+  --text: #f4ebdd;
+  --text-dim: #c6b299;
+  --text-faint: #93806a;
+
+  /* crop palette */
+  --leaf: #8cc063;
+  --leaf-deep: #56843c;
+  --leaf-dark: #33562a;
+  --flesh: #e79138;
+  --boniato: #b8577f;
+  --gold: #f0c24b;
+  --gold-deep: #b8862a;
+
+  /* semantics */
+  --ok: #83c96c;
+  --warn: #e8a33d;
+  --danger: #e2604f;
+  --info: #6fa9c9;
+
+  /* type */
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  /* geometry */
+  --r-sm: 4px;
+  --r-md: 7px;
+  --r-lg: 12px;
+  --gap: 14px;
+  --shadow-panel: 0 1px 0 rgb(255 255 255 / 4%) inset, 0 10px 24px -18px rgb(0 0 0 / 80%);
+  --shell-max: 1720px;
+}

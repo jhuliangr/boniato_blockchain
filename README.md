@@ -2,9 +2,10 @@
 
 A P2P ledger (blockchain) built on [py-ipv8](https://github.com/Tribler/py-ipv8).
 Peers generate signed dummy transactions, broadcast them across the network,
-verify the signatures on receipt and store them in a **Merkle tree**. It includes
-three gossip strategies (Push / Pull / Hybrid), topology capture and
-metrics to compare them.
+verify the signatures on receipt and store them in a **Merkle tree**. Accepted
+transactions are grouped into **Merkle-committed blocks** secured by a basic
+**Proof-of-Work**. It includes three gossip strategies (Push / Pull / Hybrid),
+topology capture and metrics to compare them.
 
 ## Structure
 
@@ -12,7 +13,7 @@ metrics to compare them.
 blockchain/
 ├── src/blockchain/
 │   ├── crypto/       asymmetric identity (keys, sign, verify)
-│   ├── core/         pure domain: Transaction + Merkle tree
+│   ├── core/         pure domain: Transaction + Merkle tree + Block + PoW
 │   ├── storage/      mempool backed by a Merkle tree
 │   ├── network/      IPv8: payloads, community, gossip strategies
 │   ├── metrics/      instrumentation (packets, duplicates, redundancy)
@@ -36,6 +37,19 @@ pip install -e .
 ## Usage
 
 All scripts add src/ to the path automatically.
+
+### Mine blocks: transactions → Merkle block → Proof-of-Work (Week 1 demo)
+
+```bash
+# create signed txs, group them under a Merkle root, mine PoW, verify the chain
+python scripts/mine_blocks.py
+
+# heavier proof-of-work / bigger blocks
+python scripts/mine_blocks.py --difficulty 22 --tx-per-block 8 --blocks 5
+```
+
+Prints each mined block's Merkle root, nonce, leading-zero bits and hash, then
+runs a sunny-day full-chain verification and a rainy-day tamper check.
 
 ### Compare the gossip strategies (Phase 3)
 

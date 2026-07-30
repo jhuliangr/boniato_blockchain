@@ -29,11 +29,17 @@ HASH_SIZE = 32  # bytes, SHA-256
 
 @dataclass
 class TransactionPayload(DataClassPayload[1]):
-    """A whole transaction pushed to a peer."""
+    """A whole transaction pushed to a peer.
+
+    ``action`` carries the application payload as opaque bytes (empty for a
+    phase-2 dummy transaction). The wire format stays indifferent to what the
+    DApp encodes in there, so adding a game operation never touches this layer.
+    """
 
     nonce: int
     public_key: bytes
     signature: bytes
+    action: bytes
 
 
 @dataclass
@@ -66,6 +72,7 @@ def to_payload(transaction: Transaction) -> TransactionPayload:
         nonce=transaction.nonce,
         public_key=transaction.public_key,
         signature=transaction.signature,
+        action=transaction.action,
     )
 
 
@@ -74,6 +81,7 @@ def from_payload(payload: TransactionPayload) -> Transaction:
         nonce=payload.nonce,
         public_key=payload.public_key,
         signature=payload.signature,
+        action=payload.action,
     )
 
 

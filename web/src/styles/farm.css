@@ -1,0 +1,506 @@
+/* The farm grid: every plot is drawn with CSS, no images and no emoji.
+   Each tile is a side-on view — dark air above, tilled soil below the line at
+   62% — so a crop can visibly grow out of the ground. Growth is driven by two
+   custom properties set inline: --p (progress 0..1) and --g (crop scale). */
+
+.farm__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: center;
+  padding: 8px 13px;
+  border-bottom: 1px solid var(--line-soft);
+  background: rgb(0 0 0 / 16%);
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+
+.legend__swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--line-soft);
+}
+
+.legend__swatch--growing {
+  background: linear-gradient(180deg, var(--leaf), var(--leaf-dark));
+}
+
+.legend__swatch--ready {
+  background: linear-gradient(180deg, #ffe08a, var(--gold-deep));
+  box-shadow: 0 0 6px rgb(240 194 75 / 60%);
+}
+
+.legend__swatch--blight {
+  background: repeating-linear-gradient(45deg, #e2604f 0 3px, #4a2a22 3px 6px);
+}
+
+.legend__swatch--mine {
+  background: var(--soil-700);
+  box-shadow: inset 0 0 0 2px rgb(240 194 75 / 75%);
+}
+
+.legend__swatch--unminted {
+  background: rgb(0 0 0 / 35%);
+  border-style: dashed;
+}
+
+.grid-wrap {
+  padding: 13px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--gw, 8), minmax(0, 1fr));
+  gap: 6px;
+}
+
+/* -------------------------------------------------------------- the tile */
+
+.plot {
+  position: relative;
+  display: block;
+  /* Buttons size to their content, so the width has to be forced: the tile
+     must fill its grid cell (and the detail panel's preview slot). */
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+  background: var(--soil-800);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+  transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.plot.is-interactive:hover {
+  transform: translateY(-2px);
+  border-color: var(--line);
+  z-index: 2;
+}
+
+.plot:not(.is-interactive) {
+  cursor: default;
+}
+
+.plot__field {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    #241a12 0%,
+    #2c2016 58%,
+    #55402b 62%,
+    #3d2c1c 88%,
+    #33251a 100%
+  );
+}
+
+/* furrows in the soil half */
+.plot__field::after {
+  position: absolute;
+  inset: 62% 0 0;
+  content: '';
+  background: repeating-linear-gradient(
+      90deg,
+      rgb(0 0 0 / 16%) 0 2px,
+      transparent 2px 11px
+    ),
+    repeating-linear-gradient(0deg, rgb(255 255 255 / 3%) 0 1px, transparent 1px 7px);
+}
+
+/* ------------------------------------------------------------- the crop */
+
+.crop {
+  position: absolute;
+  bottom: 38%;
+  left: 50%;
+  width: 38px;
+  height: 40px;
+  transform: translateX(-50%) scale(var(--g, 1));
+  transform-origin: bottom center;
+  transition: transform 0.4s ease;
+}
+
+.crop__stem {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  height: 62%;
+  margin-left: -1px;
+  background: linear-gradient(180deg, var(--leaf), var(--leaf-dark));
+  border-radius: 2px;
+}
+
+.crop__leaf {
+  position: absolute;
+  width: 16px;
+  height: 11px;
+  background: linear-gradient(140deg, var(--leaf), var(--leaf-deep));
+  box-shadow: inset 0 -1px 0 rgb(0 0 0 / 18%);
+}
+
+.crop__leaf--a {
+  bottom: 24%;
+  left: 50%;
+  border-radius: 100% 0 100% 0;
+  transform: translateX(-100%) rotate(-16deg);
+}
+
+.crop__leaf--b {
+  bottom: 34%;
+  left: 50%;
+  border-radius: 0 100% 0 100%;
+  transform: rotate(16deg);
+}
+
+.crop__leaf--c {
+  bottom: 54%;
+  left: 50%;
+  width: 13px;
+  height: 9px;
+  opacity: 0;
+  border-radius: 100% 0 100% 0;
+  transform: translateX(-92%) rotate(-34deg);
+  transition: opacity 0.3s ease;
+}
+
+.crop__leaf--d {
+  bottom: 62%;
+  left: 50%;
+  width: 12px;
+  height: 8px;
+  opacity: 0;
+  border-radius: 0 100% 0 100%;
+  transform: rotate(38deg);
+  transition: opacity 0.3s ease;
+}
+
+/* Later leaves unfurl as the crop matures. */
+.plot--half .crop__leaf--c,
+.plot--ready .crop__leaf--c {
+  opacity: 1;
+}
+
+.plot--ready .crop__leaf--d {
+  opacity: 1;
+}
+
+/* The tuber only breaks the surface once the crop is ready to harvest. */
+.crop__tuber {
+  position: absolute;
+  bottom: -18%;
+  left: 50%;
+  width: 20px;
+  height: 13px;
+  background: linear-gradient(150deg, var(--boniato), #74304a 70%);
+  border-radius: 62% 38% 54% 46% / 52% 56% 44% 48%;
+  box-shadow: inset 0 -2px 4px rgb(0 0 0 / 40%), 0 0 0 1px rgb(0 0 0 / 25%);
+  opacity: 0;
+  transform: translateX(-50%) rotate(-10deg) scale(0.6);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.plot--ready .crop__tuber {
+  opacity: 1;
+  transform: translateX(-50%) rotate(-10deg) scale(1);
+}
+
+/* ------------------------------------------------------------ ready glow */
+
+.plot--ready {
+  border-color: rgb(240 194 75 / 55%);
+}
+
+.plot--ready .plot__field::before {
+  position: absolute;
+  bottom: 22%;
+  left: 50%;
+  width: 84%;
+  height: 74%;
+  content: '';
+  background: radial-gradient(closest-side, rgb(240 194 75 / 30%), transparent 78%);
+  transform: translateX(-50%);
+  animation: ready-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes ready-glow {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------- blight */
+
+.plot--blighted .plot__overlay {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    38deg,
+    rgb(226 96 79 / 20%) 0 3px,
+    transparent 3px 9px
+  );
+}
+
+.plot--blighted .crop__leaf,
+.plot--blighted .crop__stem {
+  filter: saturate(0.35) brightness(0.78) hue-rotate(-22deg);
+}
+
+/* ------------------------------------------------------------- unclaimed */
+
+.plot--unminted {
+  border-style: dashed;
+  border-color: var(--line-soft);
+  background: repeating-linear-gradient(
+      45deg,
+      rgb(255 255 255 / 2.5%) 0 6px,
+      transparent 6px 12px
+    ),
+    rgb(0 0 0 / 28%);
+}
+
+.plot--unminted .plot__field {
+  display: none;
+}
+
+.plot--unminted .plot__id {
+  color: rgb(255 255 255 / 22%);
+}
+
+.plot__unminted-label {
+  position: absolute;
+  inset: auto 0 34% 0;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 26%);
+}
+
+/* The lowest unminted id: the parcel buy_land most likely mints next. */
+.plot--next {
+  border-color: rgb(240 194 75 / 45%);
+  box-shadow: inset 0 0 18px -6px rgb(240 194 75 / 55%);
+}
+
+.plot--next .plot__unminted-label {
+  color: rgb(240 194 75 / 80%);
+}
+
+/* ---------------------------------------------------- ownership emphasis */
+
+.plot.is-mine {
+  box-shadow: inset 0 0 0 2px rgb(240 194 75 / 62%);
+  border-color: transparent;
+}
+
+.plot.is-selected {
+  box-shadow: inset 0 0 0 2px var(--gold), 0 0 0 3px rgb(240 194 75 / 28%);
+  z-index: 3;
+}
+
+.plot.is-dim {
+  opacity: 0.82;
+}
+
+/* ------------------------------------------------------------- tile chrome */
+
+.plot__id {
+  position: absolute;
+  top: 3px;
+  left: 5px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: rgb(255 255 255 / 38%);
+}
+
+.plot__fert {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  padding: 0 3px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: #e7d6b6;
+  background: rgb(0 0 0 / 42%);
+  border-radius: 3px;
+}
+
+.plot__adj {
+  position: absolute;
+  top: 15px;
+  right: 4px;
+  padding: 0 3px;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #cfe8b0;
+  background: rgb(86 132 60 / 62%);
+  border-radius: 3px;
+}
+
+.plot__blight-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 1px 4px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  color: #fff2ef;
+  white-space: nowrap;
+  background: rgb(180 52 40 / 88%);
+  border-radius: 3px;
+  transform: translate(-50%, -50%) rotate(-8deg);
+}
+
+.plot__footer {
+  position: absolute;
+  right: 4px;
+  bottom: 6px;
+  left: 4px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 3px;
+  pointer-events: none;
+}
+
+.plot__owner {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 62%;
+  padding: 0 3px;
+  overflow: hidden;
+  font-size: 8.5px;
+  font-weight: 600;
+  color: #efe3cd;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: rgb(0 0 0 / 48%);
+  border-radius: 3px;
+}
+
+.plot__owner .dot {
+  width: 5px;
+  height: 5px;
+  color: hsl(var(--hue) 60% 58%);
+}
+
+.plot__state {
+  padding: 0 3px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  color: #d8c8a8;
+  background: rgb(0 0 0 / 48%);
+  border-radius: 3px;
+}
+
+.plot--ready .plot__state {
+  color: #2a1c05;
+  background: var(--gold);
+}
+
+.plot--blighted .plot__state {
+  color: #ffd2cb;
+  background: rgb(226 96 79 / 78%);
+}
+
+.plot__meter {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: rgb(0 0 0 / 45%);
+}
+
+.plot__meter > i {
+  display: block;
+  width: calc(var(--p, 0) * 100%);
+  height: 100%;
+  background: linear-gradient(90deg, var(--leaf-deep), var(--leaf));
+  transition: width 0.4s ease;
+}
+
+.plot--ready .plot__meter > i {
+  background: linear-gradient(90deg, var(--gold-deep), #ffe08a);
+}
+
+/* When tiles get small, drop the labels and keep the crop art legible. */
+@media (max-width: 760px) {
+  .plot__state,
+  .plot__adj {
+    display: none;
+  }
+
+  .plot__owner {
+    padding: 0 2px;
+    font-size: 0;
+  }
+
+  .plot__unminted-label {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 560px) {
+  .plot__fert,
+  .plot__id {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------- selected plot details */
+
+.plot-detail {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 13px;
+  padding: 13px;
+}
+
+.plot-detail__preview {
+  width: 84px;
+}
+
+.plot-detail__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: 7px 12px;
+  align-content: start;
+}
+
+.plot-detail__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 620px) {
+  .plot-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .plot-detail__preview {
+    max-width: 96px;
+  }
+}
