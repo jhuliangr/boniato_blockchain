@@ -2,8 +2,14 @@
 
 - ``payloads``  -> the wire format (IPv8 DataClassPayloads).
 - ``gossip``    -> pluggable Push / Pull / Hybrid propagation strategies.
-- ``community`` -> the IPv8 overlay that ties transactions, mempool, metrics
-  and the chosen gossip strategy together.
+- ``community`` -> the IPv8 overlay that ties transactions, mempool, metrics,
+  the chosen gossip strategy and the node's chain together.
+
+Transactions and blocks travel differently on purpose. A transaction is small
+and its strategy is swappable, because comparing those strategies was the point
+of phase 3. A block is large and rare, so it is **announced by hash** and pulled
+by whoever does not recognise it -- the shape the group's own measurements
+favoured, and the one Bitcoin uses.
 """
 
 from blockchain.network.community import BlockchainCommunity, NodeConfig

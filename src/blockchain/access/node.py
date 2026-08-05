@@ -4,11 +4,17 @@ Everything the HTTP layer needs, with no HTTP in it. :mod:`blockchain.access.rou
 turns requests into calls on this class and its results into JSON; keeping the two
 apart means the whole API can be tested without opening a socket.
 
-What this node is **not**: it has no peers. There is exactly one chain, so there
-is no fork choice, no block propagation and no reorg. That work belongs to the
-consensus layer and is still pending; the gossip network lives separately in
-``scripts/run_network.py``. Here, mining is a local, synchronous act that drains
-the mempool into the next block.
+What this node is **not**: it has no peers. It runs the same
+:class:`~blockchain.consensus.Ledger` as a networked peer -- same fork choice,
+same validation, same replay protection -- but nothing ever offers it a
+competing block, so the machinery never has anything to decide. Mining here is a
+local, synchronous act that drains the mempool into the next block. The peer
+that does have neighbours is :class:`~blockchain.network.BlockchainCommunity`,
+and ``scripts/run_chain.py`` runs a fleet of them.
+
+That both shells sit on one ledger is the point: an HTTP request and a UDP
+packet are two ways of arriving at the same state transition, and only one
+implementation of it exists.
 
 The keyring is the other deliberate simplification, and the more visible one: the
 node holds private keys and signs on a client's behalf, because a browser cannot
@@ -24,6 +30,7 @@ import threading
 import time
 from dataclasses import dataclass
 
+from blockchain.consensus import Ledger
 from blockchain.core import Block, Transaction, has_proof_of_work, mine
 from blockchain.crypto import Identity
 from blockchain.execution import (
@@ -64,13 +71,14 @@ class Wallet:
 
 @dataclass
 class MinedBlock:
-    """A block plus the node's bookkeeping about it.
+    """A block paired with the state root it produced.
 
-    ``state_root`` is recorded here rather than read off the header, because the
-    header does not carry one yet: committing the state root inside the block is
-    the next piece of consensus work. Until it does, this is one node's note of
-    where its state landed, which is enough to show divergence in a demo but not
-    enough to *prove* agreement to a peer.
+    ``state_root`` travels beside the block rather than inside it, because the
+    header does not commit to one. Nodes therefore *agree* on state without
+    *proving* it to each other: two peers can compare roots and detect
+    divergence, but neither can hand a third party a proof that a given block
+    yields a given state. Committing the root in the header is what closes that
+    gap, and it is the natural next change to the block format.
     """
 
     block: Block
@@ -91,12 +99,7 @@ class FarmNode:
         difficulty: int = DEFAULT_DIFFICULTY,
     ) -> None:
         self.economy = economy if economy is not None else Economy()
-        self.difficulty = difficulty
-        self.machine = StateMachine(WorldState.genesis(self.economy), self.economy)
-        self.blocks: list[MinedBlock] = [
-            MinedBlock(Block.genesis(timestamp=0), self.machine.state.state_root)
-        ]
-        self.mempool: list[Transaction] = []
+        self.ledger = Ledger(economy=self.economy, difficulty=difficulty)
         self.wallets: dict[bytes, Wallet] = {}
         self.activity: list[dict] = []
         self._lock = threading.Lock()
@@ -104,16 +107,37 @@ class FarmNode:
     # -- reads ----------------------------------------------------------------
 
     @property
+    def difficulty(self) -> int:
+        return self.ledger.difficulty
+
+    @property
+    def machine(self) -> StateMachine:
+        return self.ledger.machine
+
+    @property
     def state(self) -> WorldState:
-        return self.machine.state
+        return self.ledger.state
 
     @property
     def height(self) -> int:
-        return self.blocks[-1].block.index
+        return self.ledger.height
+
+    @property
+    def mempool(self) -> tuple[Transaction, ...]:
+        """Transactions waiting for a block. Read-only: submit through :meth:`accept`."""
+        return self.ledger.pending
+
+    @property
+    def blocks(self) -> list[MinedBlock]:
+        """The active chain, genesis first, each block with the state it produced."""
+        return [
+            MinedBlock(block, self.ledger.state_root_of(block.block_hash) or "")
+            for block in self.ledger.active_chain()
+        ]
 
     @property
     def head(self) -> MinedBlock:
-        return self.blocks[-1]
+        return MinedBlock(self.ledger.head, self.ledger.state_root)
 
     def wallet_of(self, public_key: bytes) -> Wallet | None:
         return self.wallets.get(public_key)
@@ -165,10 +189,13 @@ class FarmNode:
         the state at execution time, so they are the engine's business, not the
         mempool's.
         """
-        if not transaction.is_valid():
-            raise ValueError("invalid signature")
         with self._lock:
-            self.mempool.append(transaction)
+            if not self.ledger.submit(transaction):
+                # The ledger refuses a bad signature and a transaction it already
+                # holds. Only the first is the caller's mistake; re-submitting a
+                # queued transaction is idempotent, not an error.
+                if not transaction.is_valid():
+                    raise ValueError("invalid signature")
             return transaction
 
     # -- mining ---------------------------------------------------------------
@@ -186,22 +213,19 @@ class FarmNode:
         makes crops grow and boniatos age.
         """
         with self._lock:
-            transactions = tuple(self.mempool)
-            self.mempool.clear()
-
-            candidate = Block.create(
-                index=self.height + 1,
-                prev_hash=self.head.block.block_hash,
-                transactions=transactions,
-                timestamp=int(time.time()),
-            )
-            block = mine(candidate, self.difficulty)
+            block = mine(self.ledger.candidate(timestamp=int(time.time())), self.difficulty)
             assert has_proof_of_work(block, self.difficulty)
 
-            receipts, events = self.machine.apply_block(block)
-            mined = MinedBlock(block, self.machine.state.state_root)
-            self.blocks.append(mined)
-            return (mined, *self._record(block.index, receipts, events))
+            # Through the ledger, not around it: the block this node just mined
+            # is validated exactly like one from a peer would be. If our own
+            # block is unacceptable, we want to hear it here.
+            update = self.ledger.connect(block)
+            if not update.applied:  # pragma: no cover - would be a bug in mining
+                raise AssertionError(f"the node rejected its own block: {update.chain.reason}")
+
+            outcome = update.applied[-1]
+            mined = MinedBlock(outcome.block, outcome.state_root)
+            return (mined, *self._record(block.index, list(outcome.receipts), list(outcome.events)))
 
     # -- activity log ---------------------------------------------------------
 
